@@ -196,15 +196,15 @@ def get_start_keyboard():
     return {
         "inline_keyboard": [
             [
-                {"text": "𝙼𝙰𝙸𝙽", "callback_data": "main",style="success"},
+                {"text": "𝙼𝙰𝙸𝙽", "callback_data": "main",style="success"}
                 {"text": "𝙲𝙰𝚁𝙳𝙸𝙽𝙶", "callback_data": "carding",style="success"}
             ],
             [
-                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "callback_data": "charge",style="success"},
+                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "callback_data": "charge",style="success"}
                 {"text": "𝚅𝙸𝙿", "callback_data": "vip",style="success"}
             ],
             [
-                {"text": "𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "callback_data": "paid_dumps",style="success"},
+                {"text": "𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "callback_data": "paid_dumps",style="success"}
                 {"text": "𝚆𝙴𝙱", "callback_data": "web",style="success"}
             ],
             [
