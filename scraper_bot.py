@@ -191,39 +191,46 @@ def luhn_check(card_number):
 
 # ============ KEYBOARD BUTTONS ============
 
-def get_start_keyboard():
-    """Get 8 button inline keyboard for start screen"""
-    return {
-        "inline_keyboard": [
-            [
-                {"text": "𝙼𝙰𝙸𝙽", "callback_data": "main",style="success"}
-                {"text": "𝙲𝙰𝚁𝙳𝙸𝙽𝙶", "callback_data": "carding",style="success"}
-            ],
-            [
-                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "callback_data": "charge",style="success"}
-                {"text": "𝚅𝙸𝙿", "callback_data": "vip",style="success"}
-            ],
-            [
-                {"text": "𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "callback_data": "paid_dumps",style="success"}
-                {"text": "𝚆𝙴𝙱", "callback_data": "web",style="success"}
-            ],
-            [
-                {"text": "𝙰𝙰𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "callback_data": "approved_card",style="success"}
-            ],
-            [
-                {"text": "𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", "callback_data": "add_channel",style="danger"}
-            ]
+def get_main_menu_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="𝙼𝙰𝙸𝙽", url="https://t.me/atulfroxt", style="success"),
+            InlineKeyboardButton(text="𝙲𝙰𝚁𝙳𝙸𝙽𝙶", url="https://t.me/+sT1N0pne6sQzNTFl", style="success")
+        ],
+        [
+            InlineKeyboardButton(text="𝙲𝙷𝙰𝚁𝙶𝙴", url="https://t.me/+rzRUgyJfia84NjBl", style="primary"),
+            InlineKeyboardButton(text="𝚅𝙸𝙿", url="https://t.me/+u9cv-q_x57xkNzA1", style="primary")
+        ],
+        [
+            InlineKeyboardButton(text="𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", url="https://t.me/+yn-01TbWsfk2NTU1", style="success"),
+            InlineKeyboardButton(text="𝚆𝙴𝙱", url="https://your-website.com", style="success")
+        ],
+        [
+            InlineKeyboardButton(text="𝙰𝙰𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", url="https://t.me/aaproved_card07", style="success")
+        ],
+        [
+            InlineKeyboardButton(text="𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", callback_data="add_channel", style="danger")
         ]
-    }
+    ]
+    
+    # Send with image
+    return send_telegram_message(
+        chat_id=chat_id,
+        text=welcome_text,
+        reply_markup=reply_markup,
+        photo=START_IMAGE
+    )
 
 def get_card_keyboard():
     """Get 3 button keyboard for approved cards"""
     return {
         "inline_keyboard": [
             [
-                {"text": "𝚅𝙸𝙿", "callback_data": "vip",style="primary"},
-                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "callback_data": "charge",style="primary"},
-                {"text": "Mᴀɪɴ", "callback_data": "main",style="danger"}
+                {"text": "𝚅𝙸𝙿", "callback_data": "vip"},
+                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "callback_data": "charge"},
+            ],
+            [
+                {"text": "Mᴀɪɴ", "callback_data": "main"}
             ]
         ]
     }
@@ -273,25 +280,19 @@ def handle_approved_card(chat_id):
     
     message = (
         f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"✅ <b>APPROVED</b>{high_hit_badge}\n"
+        f"✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>CC</b> <code>{card_details}</code>\n"
-        f"<b>Gen</b> <code>/gen {card_masked}</code>\n"
+        f"💳 <b>𝗖𝗖</b> <code>{card_details}</code>\n"
+        f"🍀 <b>𝗚𝗲𝗻</b> <code>/gen {card_masked}</code>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>BIN</b>\n"
-        f"{card_data['bin']}\n"
-        f"<b>Bk</b>\n"
-        f"{card_data['bank']}\n"
-        f"<b>Bv</b>\n"
-        f"{card_data['card_type']}\n"
-        f"<b>Te</b>\n"
-        f"{card_data['type']}\n"
-        f"<b>Lv</b>\n"
-        f"{card_data['level']}\n"
-        f"<b>City</b>\n"
-        f"{card_data['country']} {card_data['country_flag']}\n"
+        f"⚠️ <b>𝗕𝗜𝗡</b> {card_data['bin']}\n"
+        f"🏦 <b>𝗕𝗸</b> {card_data['bank']}\n"
+        f"🍒 <b>𝗕𝗱</b> {card_data['card_type']}\n"
+        f"📌 <b>𝗧𝗲</b> {card_data['type']}\n"
+        f"👑 <b>𝗟𝘃</b> {card_data['level']}\n"
+        f"🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"<b>@{'Scra07bot'}</b>\n"
+        f"⭐ <b>@{'Scra07bot'}</b>\n"
         f"{datetime.now().strftime('%I:%M %p')}\n"
     )
     
