@@ -1,14 +1,12 @@
 import os
-import requests
 import random
 import time
-import json
+import asyncio
 import logging
-from faker import Faker
 from datetime import datetime
-from flask import Flask, request
-import threading
-from concurrent.futures import ThreadPoolExecutor
+from telethon import TelegramClient, events, Button
+from telethon.tl.types import InputWebDocument
+from faker import Faker
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -17,25 +15,11 @@ logger = logging.getLogger(__name__)
 fake = Faker()
 
 # ============ CONFIGURATION ============
+API_ID = int(os.environ.get('API_ID', '35384207'))
+API_HASH = os.environ.get('API_HASH', '09c4bc9de62a417ccdd0c69b33912515')
 BOT_TOKEN = os.environ.get('BOT_TOKEN', '8815044105:AAFF9ekYN74wnLQPFUQ3Tm5RA8g4MHvqq0Q')
-CHAT_ID = int(os.environ.get('CHAT_ID', -1004455513816))
-WEBHOOK_URL = os.environ.get('WEBHOOK_URL', 'https://your-app.onrender.com/webhook')
 
-# Channel Links (Update these)
-CHANNEL_LINKS = {
-    'main': 'https://t.me/atulfroxt',
-    'carding': 'https://t.me/+sT1N0pne6sQzNTFl',
-    'charge': 'https://t.me/+rzRUgyJfia84NjBl',
-    'vip': 'https://t.me/+u9cv-q_x57xkNzA1',
-    'paid_dumps': 'https://t.me/+yn-01TbWsfk2NTU1',
-    'web': 'https://your-website.com',
-    'approved_cards': 'https://t.me/aaproved_card07'
-}
-
-# Start Image URL
-START_IMAGE = "https://ibb.co/vx25TtC0"  # Replace with your image
-
-# ============ CARD BINS ============
+# ============ VISA & MASTERCARD BINS ============
 VISA_BINS = [
     '4532', '4539', '4556', '4916', '4929', '4484', '4716', '4026', '4175',
     '4266', '4284', '4310', '4338', '4383', '4405', '4420', '4445', '4462',
@@ -66,72 +50,27 @@ HIGH_HIT_MASTERCARD = ['5221', '5223', '5230', '5234', '5244', '5250', '5254', '
 PREMIUM_BANKS = [
     'CHASE', 'CITIBANK', 'BANK OF AMERICA', 'WELLS FARGO', 
     'CAPITAL ONE', 'US BANK', 'PNC BANK', 'TD BANK',
-    'ADDITION FINANCIAL CREDIT UNION', 'GOLDMAN SACHS',
-    'MORGAN STANLEY', 'JPMORGAN CHASE', 'AMERICAN EXPRESS'
+    'GOLDMAN SACHS', 'MORGAN STANLEY', 'JPMORGAN CHASE'
 ]
 
-CARD_LEVELS = ['CLASSIC', 'GOLD', 'PLATINUM', 'SIGNATURE', 'WORLD ELITE', 'BLACK']
+CARD_LEVELS = ['CLASSIC', 'GOLD', 'PLATINUM', 'SIGNATURE', 'WORLD ELITE']
 
-# ============ TELEGRAM API FUNCTIONS ============
+# ============ START IMAGE ============
+START_IMAGE = "https://ibb.co/vx25TtC0"
 
-def send_telegram_message(chat_id, text, reply_markup=None, photo=None, parse_mode='HTML', disable_web_page_preview=True):
-    """Send message to Telegram"""
-    telegram_api = f'https://api.telegram.org/bot{BOT_TOKEN}'
-    
-    try:
-        if photo:
-            data = {
-                'chat_id': chat_id,
-                'caption': text,
-                'parse_mode': parse_mode,
-                'disable_web_page_preview': disable_web_page_preview,
-                'reply_markup': json.dumps(reply_markup) if reply_markup else None
-            }
-            files = {'photo': requests.get(photo).content}
-            response = requests.post(f'{telegram_api}/sendPhoto', data=data, files=files)
-        else:
-            data = {
-                'chat_id': chat_id,
-                'text': text,
-                'parse_mode': parse_mode,
-                'disable_web_page_preview': disable_web_page_preview,
-                'reply_markup': json.dumps(reply_markup) if reply_markup else None
-            }
-            response = requests.post(f'{telegram_api}/sendMessage', data=data)
-        
-        return response.json()
-    except Exception as e:
-        logger.error(f"Error sending message: {e}")
-        return None
-
-def edit_telegram_message(chat_id, message_id, text, reply_markup=None, parse_mode='HTML'):
-    """Edit existing message"""
-    telegram_api = f'https://api.telegram.org/bot{BOT_TOKEN}'
-    
-    try:
-        data = {
-            'chat_id': chat_id,
-            'message_id': message_id,
-            'text': text,
-            'parse_mode': parse_mode,
-            'reply_markup': json.dumps(reply_markup) if reply_markup else None
-        }
-        response = requests.post(f'{telegram_api}/editMessageText', data=data)
-        return response.json()
-    except Exception as e:
-        logger.error(f"Error editing message: {e}")
-        return None
+# ============ TELEGRAM CLIENT ============
+bot = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
 # ============ CARD GENERATION FUNCTIONS ============
 
 def generate_card_number(card_type):
     """Generate valid card number"""
-    if card_type == 'Visa':
+    if card_type == 'VISA':
         if random.random() < 0.7:
             bin_prefix = random.choice(HIGH_HIT_VISA)
         else:
             bin_prefix = random.choice(VISA_BINS)
-    else:  # Mastercard
+    else:  # MASTERCARD
         if random.random() < 0.7:
             bin_prefix = random.choice(HIGH_HIT_MASTERCARD)
         else:
@@ -151,10 +90,22 @@ def generate_card_number(card_type):
     
     return body + str(check_digit)
 
+def luhn_check(card_number):
+    """Verify card number using Luhn algorithm"""
+    digits = [int(d) for d in card_number]
+    for i in range(len(digits) - 2, -1, -2):
+        digits[i] *= 2
+        if digits[i] > 9:
+            digits[i] -= 9
+    return sum(digits) % 10 == 0
+
 def generate_card():
     """Generate complete card details"""
-    card_type = random.choices(['Visa', 'Mastercard'], weights=[55, 45], k=1)[0]
+    card_type = random.choices(['VISA', 'MASTERCARD'], weights=[55, 45], k=1)[0]
     card_number = generate_card_number(card_type)
+    
+    if not luhn_check(card_number):
+        return generate_card()
     
     month = str(random.randint(1, 12)).zfill(2)
     year = str(random.randint(27, 38)).zfill(2)
@@ -162,7 +113,7 @@ def generate_card():
     
     bin_number = card_number[:6]
     bank = random.choice(PREMIUM_BANKS)
-    level = random.choices(CARD_LEVELS, weights=[5, 10, 30, 25, 20, 10], k=1)[0]
+    level = random.choices(CARD_LEVELS, weights=[5, 15, 30, 25, 25], k=1)[0]
     card_type_display = random.choice(['DEBIT', 'CREDIT'])
     
     return {
@@ -170,7 +121,7 @@ def generate_card():
         'month': month,
         'year': year,
         'cvv': cvv,
-        'card_type': card_type.upper(),
+        'card_type': card_type,
         'bin': bin_number,
         'bank': bank,
         'level': level,
@@ -180,401 +131,283 @@ def generate_card():
         'is_high_hit': any(bin_number.startswith(b) for b in HIGH_HIT_VISA + HIGH_HIT_MASTERCARD)
     }
 
-def luhn_check(card_number):
-    """Verify card number"""
-    digits = [int(d) for d in card_number]
-    for i in range(len(digits) - 2, -1, -2):
-        digits[i] *= 2
-        if digits[i] > 9:
-            digits[i] -= 9
-    return sum(digits) % 10 == 0
+# ============ BOT HANDLERS ============
 
-# ============ KEYBOARD BUTTONS ============
-
-async def menu_main_callback(event):
+@bot.on(events.NewMessage(pattern='/start'))
+async def start_command(event):
+    """Handle /start command with image"""
     user_id = event.sender_id
     sender = await event.get_sender()
     name = sender.first_name if sender.first_name else "User"
-    msg = f"""🐍 <b>FROXT</b>\n"
-<b>SCRAP BOT</b>\n"
-━━━━━━━━━━━━━━━━━━━━━━━━\n"
-👤 <b>User ID:</b> <code>{user_id}</code>\n"
-👤 <b>Name:</b> {username or first_name}\n"
-━━━━━━━━━━━━━━━━━━━━━━━━\n"
-⚠️ <i>No Channel Added</i>\n"
-• Use '🔗 Add Channel' button to add your channel\n"
+    
+    msg = f"""🐍 <b>FROXT</b>
+<b>SCRAP BOT</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+👤 <b>User ID:</b> <code>{user_id}</code>
+👤 <b>Name:</b> {name}
+━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ <i>No Channel Added</i>
+• Use '🔗 ADD CHANNEL' button to add your channel
 • <b>Enjoy!</b>"""
+    
     buttons = [
         [Button.url("𝙼𝙰𝙸𝙽", "https://t.me/atulfroxt", style="success"), Button.url("𝙲𝙰𝚁𝙳𝙸𝙽𝙶", "https://t.me/+sT1N0pne6sQzNTFl", style="success")],
         [Button.url("𝙲𝙷𝙰𝚁𝙶𝙴", "https://t.me/+rzRUgyJfia84NjBl", style="success"), Button.url("𝚅𝙸𝙿", "https://t.me/+u9cv-q_x57xkNzA1", style="success")],
         [Button.url("𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "https://t.me/+yn-01TbWsfk2NTU1", style="success"), Button.url("𝚆𝙴𝙱", "https://your-website.com", style="success")],
-        [Button.url("𝙰𝙰𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success")]
-        [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"menu_close", style="danger")]
+        [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success"),
+        [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
     ]
-    await event.edit(premium_emoji(msg), buttons=buttons, parse_mode='html', link_preview=False)
     
     # Send with image
-    return send_telegram_message(
-        chat_id=chat_id,
-        text=welcome_text,
-        reply_markup=reply_markup,
-        photo=START_IMAGE
-    )
+    try:
+        await bot.send_file(
+            event.chat_id,
+            START_IMAGE,
+            caption=msg,
+            buttons=buttons,
+            parse_mode='html'
+        )
+    except:
+        # If image fails, send text with buttons
+        await event.reply(msg, buttons=buttons, parse_mode='html', link_preview=False)
 
-# ============ COMMAND HANDLERS ============
-
-def handle_start(chat_id, user_id, username, first_name):
-    """Handle /start command"""
+@bot.on(events.NewMessage(pattern='/scrape'))
+async def scrape_command(event):
+    """Handle /scrape command - Start scraping cards in channel"""
+    chat_id = event.chat_id
     
-    welcome_text = (
-        f"🐍 <b>FROXT</b>\n"
-        f"<b>SCRAP BOT</b>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 <b>User ID:</b> <code>{user_id}</code>\n"
-        f"👤 <b>Name:</b> {username or first_name}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⚠️ <i>No Channel Added</i>\n"
-        f"• Use '🔗 Add Channel' button to add your channel\n"
-        f"• <b>Enjoy!</b>\n"
-    )
+    msg = """🚀 <b>SCRAPER STARTED</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+💳 <b>Cards:</b> VISA & MASTERCARD
+🔥 <b>Mode:</b> High-Hit
+📌 <b>Status:</b> Running...
+━━━━━━━━━━━━━━━━━━━━━━━━
+Use <code>/stop</code> to stop scraping"""
     
-    return send_telegram_message(
-        chat_id=chat_id,
-        text=welcome_text,
-        reply_markup=get_start_keyboard(),
-        photo=START_IMAGE
-    )
+    await event.reply(msg, parse_mode='html')
+    
+    # Start scraping in background
+    asyncio.create_task(scrape_cards_continuous(chat_id))
 
-def handle_approved_card(chat_id):
-    """Generate and send approved card"""
+@bot.on(events.NewMessage(pattern='/stop'))
+async def stop_command(event):
+    """Handle /stop command"""
+    global scraper_running
+    scraper_running = False
+    
+    msg = """⛔ <b>SCRAPER STOPPED</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+📊 <b>Total cards sent:</b> {count}
+━━━━━━━━━━━━━━━━━━━━━━━━
+Use <code>/scrape</code> to start again"""
+    
+    await event.reply(msg, parse_mode='html')
+
+@bot.on(events.NewMessage(pattern='/gen'))
+async def gen_command(event):
+    """Handle /gen command - Generate single card"""
     card_data = generate_card()
+    await send_approved_card(event.chat_id, card_data)
+
+@bot.on(events.CallbackQuery)
+async def callback_handler(event):
+    """Handle callback queries from buttons"""
+    data = event.data.decode('utf-8')
+    
+    if data == 'add_channel':
+        msg = """🔗 <b>ADD CHANNEL</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+📌 <b>How to add bot to your channel:</b>
+
+1️⃣ Add @YourBotName as admin to your channel
+2️⃣ Send <code>/start</code> in your channel
+3️⃣ Bot will start scraping cards there
+
+⚠️ Make sure to give bot admin permissions!"""
+        
+        buttons = [[Button.inline("Bᴀᴄᴋ", b"back", style="danger")]]
+        await event.edit(msg, buttons=buttons, parse_mode='html')
+    
+    elif data == 'back':
+        # Go back to main menu
+        user_id = event.sender_id
+        sender = await event.get_sender()
+        name = sender.first_name if sender.first_name else "User"
+        
+        msg = f"""🐍 <b>FROXT</b>
+<b>SCRAP BOT</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+👤 <b>User ID:</b> <code>{user_id}</code>
+👤 <b>Name:</b> {name}
+━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ <i>No Channel Added</i>
+• Use '🔗 ADD CHANNEL' button to add your channel
+• <b>Enjoy!</b>"""
+        
+        buttons = [
+            [Button.url("𝙼𝙰𝙸𝙽", "https://t.me/atulfroxt", style="success"), Button.url("𝙲𝙰𝚁𝙳𝙸𝙽𝙶", "https://t.me/+sT1N0pne6sQzNTFl", style="success")],
+            [Button.url("𝙲𝙷𝙰𝚁𝙶𝙴", "https://t.me/+rzRUgyJfia84NjBl", style="success"), Button.url("𝚅𝙸𝙿", "https://t.me/+u9cv-q_x57xkNzA1", style="success")],
+            [Button.url("𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "https://t.me/+yn-01TbWsfk2NTU1", style="success"), Button.url("𝚆𝙴𝙱", "https://your-website.com", style="success")],
+            [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success"),
+            [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
+        ]
+        
+        await event.edit(msg, buttons=buttons, parse_mode='html', link_preview=False)
+    
+    elif data == 'vip':
+        await event.answer("👑 VIP Channel: https://t.me/+u9cv-q_x57xkNzA1", alert=True)
+    
+    elif data == 'charge':
+        await event.answer("⚡ Charge Channel: https://t.me/+rzRUgyJfia84NjBl", alert=True)
+    
+    elif data == 'main':
+        await event.answer("🏠 Main Channel: https://t.me/atulfroxt", alert=True)
+
+async def send_approved_card(chat_id, card_data=None):
+    """Send approved card to chat"""
+    if not card_data:
+        card_data = generate_card()
     
     # Format card details
     card_details = f"{card_data['card_number']}|{card_data['month']}|20{card_data['year']}|{card_data['cvv']}"
     card_masked = f"{card_data['card_number'][:6]}xxxx|{card_data['month']}|20{card_data['year']}|xxx"
     
-    reply_markup = {
-            "inline_keyboard": [
-                [
-                    {"text": "𝚅𝙸𝙿", "url": "https://t.me/+u9cv-q_x57xkNzA1"},
-                    {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "url": "https://t.me/+rzRUgyJfia84NjBl"},
-                ],
-                [
-                    {"text": "Mᴀɪɴ", "url": "https://t.me/atulfroxt"},
-                ]
-            ]
-        }
-    
     # High hit badge
     high_hit_badge = " 🔥 HIGH HIT" if card_data['is_high_hit'] else ""
     
-    message = (
-        f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"💳 <b>𝗖𝗖</b> <code>{card_details}</code>\n"
-        f"🍀 <b>𝗚𝗲𝗻</b> <code>/gen {card_masked}</code>\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⚠️ <b>𝗕𝗜𝗡</b> {card_data['bin']}\n"
-        f"🏦 <b>𝗕𝗸</b> {card_data['bank']}\n"
-        f"🍒 <b>𝗕𝗱</b> {card_data['card_type']}\n"
-        f"📌 <b>𝗧𝗲</b> {card_data['type']}\n"
-        f"👑 <b>𝗟𝘃</b> {card_data['level']}\n"
-        f"🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⭐ <b>@{'Scra07bot'}</b>\n"
-        f"{datetime.now().strftime('%I:%M %p')}\n"
-    )
+    # Card type icon
+    card_icon = "4️⃣" if card_data['card_type'] == 'VISA' else "5️⃣"
     
-    return send_telegram_message(
-        chat_id=chat_id,
-        text=message,
-        reply_markup=get_card_keyboard()
-    )
+    msg = f"""━━━━━━━━━━━━━━━━━━━━━━━━
+✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}
+━━━━━━━━━━━━━━━━━━━━━━━━
+💳 <b>𝗖𝗖</b> <code>{card_details}</code>
+🍀 <b>𝗚𝗲𝗻</b> <code>/gen {card_masked}</code>
+━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ <b>𝗕𝗜𝗡</b> {card_data['bin']}
+🏦 <b>𝗕𝗸</b> {card_data['bank']}
+🍒 <b>𝗕𝗱</b> {card_data['card_type']}
+📌 <b>𝗧𝗲</b> {card_data['type']
+👑 <b>𝗟𝘃</b> {card_data['level']}
+🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}
+━━━━━━━━━━━━━━━━━━━━━━━━
+⭐ <b>@{'Scra07bot'}</b>
+{datetime.now().strftime('%I:%M %p')}"""
+    
+    buttons = [
+        [Button.inline("𝚅𝙸𝙿", b"vip", style="success"), Button.inline("𝙲𝙷𝙰𝚁𝙶𝙴", b"charge", style="success"), 
+        [Button.inline("Mᴀɪɴ", b"main", style="success")]
+    ]
+    
+    try:
+        await bot.send_message(chat_id, msg, buttons=buttons, parse_mode='html', link_preview=False)
+        return True
+    except Exception as e:
+        logger.error(f"Error sending card: {e}")
+        return False
 
-def handle_channel_link(chat_id, channel_key):
-    """Handle channel link buttons"""
-    if channel_key in CHANNEL_LINKS:
-        url = CHANNEL_LINKS[channel_key]
-        names = {
-            'main': '🏠 Main Channel',
-            'carding': '💳 Carding Channel',
-            'charge': '⚡ Charge Channel',
-            'vip': '👑 VIP Channel',
-            'paid_dumps': '💰 Paid Dumps',
-            'web': '🌐 Website'
-        }
-        
-        text = f"{names.get(channel_key, 'Channel')}\n\n{url}"
-        
-        return send_telegram_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=get_single_button_keyboard("🔗 Open", url)
-        )
+# Global variable for scraper control
+scraper_running = True
 
-# ============ SCRAPER FUNCTION ============
-
-def scrape_cards_continuous(chat_id, total_cards=100000, delay=0.5):
-    """Continuous card scraping"""
-    logger.info(f"Starting scraper for chat {chat_id}")
+async def scrape_cards_continuous(chat_id, total_cards=1000000, delay=0.5):
+    """Continuous card scraping in channel"""
+    global scraper_running
+    scraper_running = True
+    
+    logger.info(f"🚀 Starting scraper for chat {chat_id}")
     
     success_count = 0
-    stats = {'Visa': 0, 'Mastercard': 0, 'HighHit': 0}
+    stats = {'VISA': 0, 'MASTERCARD': 0, 'HighHit': 0}
+    start_time = time.time()
     
     for i in range(1, total_cards + 1):
-        # Generate card
-        card_data = generate_card()
-        
-        # Validate
-        if not luhn_check(card_data['card_number']):
-            continue
-        
-        # Update stats
-        stats[card_data['card_type']] += 1
-        if card_data['is_high_hit']:
-            stats['HighHit'] += 1
-        
-        # Send card
-        if handle_approved_card(chat_id):
-            success_count += 1
-        
-        # Progress
-        if i % 100 == 0:
-            logger.info(f"📊 Progress: {i}/{total_cards} | Sent: {success_count} | 🔥 HighHit: {stats['HighHit']}")
-        
-        # Small delay
-        time.sleep(delay)
+        if not scraper_running:
+            logger.info(f"⛔ Scraper stopped by user")
+            break
+            
+        try:
+            # Generate card
+            card_data = generate_card()
+            
+            # Update stats
+            stats[card_data['card_type']] += 1
+            if card_data['is_high_hit']:
+                stats['HighHit'] += 1
+            
+            # Send card
+            if await send_approved_card(chat_id, card_data):
+                success_count += 1
+            
+            # Progress
+            if i % 50 == 0:
+                elapsed = time.time() - start_time
+                rate = i / elapsed if elapsed > 0 else 0
+                logger.info(f"📊 Progress: {i} cards | Sent: {success_count} | 🔥 HighHit: {stats['HighHit']} | Rate: {rate:.1f}/s")
+            
+            # Small delay
+            await asyncio.sleep(delay)
+            
+        except Exception as e:
+            logger.error(f"Error in scraper: {e}")
+            await asyncio.sleep(2)
     
-    logger.info(f"✅ Scraping complete. Sent {success_count} cards")
-    return success_count
-
-# ============ FLASK WEBHOOK ============
-
-app = Flask(__name__)
-
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    return """
-    <html>
-        <head>
-            <title>SCRAP BOT</title>
-            <style>
-                body {
-                    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-                    color: #fff;
-                    font-family: Arial, sans-serif;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
-                    text-align: center;
-                }
-                .container {
-                    padding: 40px;
-                    background: rgba(255,255,255,0.05);
-                    border-radius: 20px;
-                    border: 1px solid rgba(255,255,255,0.1);
-                }
-                h1 {
-                    font-size: 3em;
-                    background: linear-gradient(45deg, #f093fb, #f5576c);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-                .status {
-                    color: #4ade80;
-                    font-size: 1.2em;
-                    margin-top: 20px;
-                }
-                .status::before {
-                    content: "● ";
-                    animation: blink 1s infinite;
-                }
-                @keyframes blink {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0; }
-                }
-                .buttons {
-                    margin-top: 30px;
-                    display: flex;
-                    gap: 10px;
-                    justify-content: center;
-                    flex-wrap: wrap;
-                }
-                .btn {
-                    background: rgba(255,255,255,0.1);
-                    padding: 10px 20px;
-                    border-radius: 10px;
-                    border: 1px solid rgba(255,255,255,0.2);
-                    color: #fff;
-                    text-decoration: none;
-                    transition: all 0.3s;
-                }
-                .btn:hover {
-                    background: rgba(255,255,255,0.2);
-                    transform: scale(1.05);
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🐍 SCRAP BOT</h1>
-                <div class="status">Bot is Online</div>
-                <div class="buttons">
-                    <span class="btn">💳 Visa</span>
-                    <span class="btn">💳 Mastercard</span>
-                    <span class="btn">🔥 High Hit</span>
-                </div>
-            </div>
-        </body>
-    </html>
-    """, 200
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    """Handle incoming updates"""
-    try:
-        update = request.get_json()
-        
-        if not update:
-            return "OK", 200
-        
-        # Handle message
-        if 'message' in update:
-            message = update['message']
-            chat_id = message['chat']['id']
-            user_id = message['from']['id']
-            username = message['from'].get('username', 'User')
-            first_name = message['from'].get('first_name', 'User')
-            
-            # Handle commands
-            if 'text' in message:
-                text = message['text']
-                
-                if text == '/start':
-                    handle_start(chat_id, user_id, username, first_name)
-                
-                elif text == '/scrape':
-                    send_telegram_message(
-                        chat_id=chat_id,
-                        text="🚀 <b>Starting Scraper...</b>\n\nSending approved cards to this chat!\nPress /stop to stop."
-                    )
-                    threading.Thread(target=scrape_cards_continuous, args=(chat_id, 100000, 0.5)).start()
-                
-                elif text == '/stop':
-                    send_telegram_message(
-                        chat_id=chat_id,
-                        text="⛔ <b>Scraper Stopped</b>\n\nTo start again use /scrape"
-                    )
-                
-                elif text.startswith('/gen'):
-                    # Handle /gen command
-                    send_telegram_message(
-                        chat_id=chat_id,
-                        text="✅ <b>Card Generated</b>\n\nUse /scrape to get live cards"
-                    )
-        
-        # Handle callback queries (button clicks)
-        elif 'callback_query' in update:
-            callback = update['callback_query']
-            chat_id = callback['message']['chat']['id']
-            message_id = callback['message']['message_id']
-            data = callback['data']
-            
-            # Acknowledge callback
-            requests.post(
-                f'https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery',
-                data={'callback_query_id': callback['id']}
-            )
-            
-            # Handle button clicks
-            if data == 'main':
-                handle_channel_link(chat_id, 'main')
-            
-            elif data == 'carding':
-                handle_channel_link(chat_id, 'carding')
-            
-            elif data == 'charge':
-                handle_channel_link(chat_id, 'charge')
-            
-            elif data == 'vip':
-                handle_channel_link(chat_id, 'vip')
-            
-            elif data == 'paid_dumps':
-                handle_channel_link(chat_id, 'paid_dumps')
-            
-            elif data == 'web':
-                handle_channel_link(chat_id, 'web')
-            
-            elif data == 'approved_card':
-                handle_approved_card(chat_id)
-            
-            elif data == 'add_channel':
-                add_channel_text = (
-                    "🔗 <b>Add Channel</b>\n"
-                    "━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                    "📌 <b>How to add bot to your channel:</b>\n\n"
-                    "1️⃣ Add @YourBotName as admin to your channel\n"
-                    "2️⃣ Send <code>/start</code> in your channel\n"
-                    "3️⃣ Bot will start scraping cards there\n\n"
-                    "⚠️ Make sure to give bot admin permissions!"
-                )
-                send_telegram_message(
-                    chat_id=chat_id,
-                    text=add_channel_text,
-                    reply_markup={
-                        "inline_keyboard": [
-                            [{"text": "Bᴀᴄᴋ", "callback_data": "main"}]
-                        ]
-                    }
-                )
-        
-        return "OK", 200
+    # Final summary
+    elapsed = time.time() - start_time
+    logger.info(f"✅ Scraping complete! Sent {success_count} cards in {elapsed:.1f}s")
     
-    except Exception as e:
-        logger.error(f"Webhook error: {e}")
-        return "Error", 500
+    # Send summary to chat
+    summary = f"""📊 <b>SCRAPING COMPLETE</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+✅ <b>Total cards sent:</b> {success_count}
+💳 <b>VISA:</b> {stats['VISA']}
+💳 <b>MASTERCARD:</b> {stats['MASTERCARD']}
+🔥 <b>High-Hit:</b> {stats['HighHit']}
+⏱️ <b>Time:</b> {elapsed:.1f}s
+━━━━━━━━━━━━━━━━━━━━━━━━
+Use <code>/scrape</code> to start again"""
+    
+    await bot.send_message(chat_id, summary, parse_mode='html')
+
+@bot.on(events.NewMessage)
+async def handle_messages(event):
+    """Handle messages in channels/groups"""
+    # Only respond to commands in channels/groups
+    if event.is_channel or event.is_group:
+        if event.message.text and event.message.text.startswith('/start'):
+            chat_id = event.chat_id
+            user_id = event.sender_id
+            sender = await event.get_sender()
+            name = sender.first_name if sender.first_name else "User"
+            
+            msg = f"""🐍 <b>FROXT</b>
+<b>SCRAP BOT</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+👤 <b>User ID:</b> <code>{user_id}</code>
+👤 <b>Name:</b> {name}
+━━━━━━━━━━━━━━━━━━━━━━━━
+✅ <b>Bot added to channel!</b>
+• Use <code>/scrape</code> to start scraping
+• Use <code>/stop</code> to stop scraping
+━━━━━━━━━━━━━━━━━━━━━━━━
+💳 <b>Cards:</b> VISA & MASTERCARD
+🔥 <b>Mode:</b> High-Hit
+━━━━━━━━━━━━━━━━━━━━━━━━
+<b>Enjoy!</b>"""
+            
+            await event.reply(msg, parse_mode='html')
 
 # ============ MAIN ============
 
-def set_webhook():
-    """Set webhook for the bot"""
-    try:
-        response = requests.get(
-            f'https://api.telegram.org/bot{BOT_TOKEN}/setWebhook',
-            params={'url': WEBHOOK_URL}
-        )
-        logger.info(f"Webhook set: {response.json()}")
-        return response.json()
-    except Exception as e:
-        logger.error(f"Failed to set webhook: {e}")
-        return None
-
-def keep_alive():
-    """Keep the bot running"""
-    from threading import Thread
+async def main():
+    """Main function"""
+    logger.info("="*50)
+    logger.info("🐍 SCRAP BOT STARTED!")
+    logger.info("💳 Cards: VISA & MASTERCARD")
+    logger.info("🔥 High-hit mode enabled")
+    logger.info("📌 Bot is ready!")
+    logger.info("="*50)
     
-    def run():
-        app.run(host='0.0.0.0', port=8080)
-    
-    t = Thread(target=run)
-    t.daemon = True
-    t.start()
+    await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    # Start keep-alive
-    keep_alive()
-    
-    # Set webhook
-    set_webhook()
-    
-    logger.info("🐍 SCRAP BOT Started!")
-    logger.info(f"📡 Webhook: {WEBHOOK_URL}")
-    logger.info("💳 Cards: Visa & Mastercard")
-    logger.info("🔥 High-hit mode enabled")
-    
-    # Keep the script running
-    while True:
-        time.sleep(60)
+    asyncio.run(main())
