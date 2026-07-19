@@ -222,28 +222,6 @@ async def menu_main_callback(event):
         photo=START_IMAGE
     )
 
-def get_card_keyboard():
-    """Get 3 button keyboard for approved cards"""
-    return {
-        "inline_keyboard": [
-            [
-                {text="𝚅𝙸𝙿", callback_data="vip"},
-                {text="𝙲𝙷𝙰𝚁𝙶𝙴", callback_data="charge"},
-            ],
-            [
-                {text="Mᴀɪɴ", callback_data="main"}
-            ]
-        ]
-    }
-
-def get_single_button_keyboard(text, url):
-    """Get single button keyboard"""
-    return {
-        "inline_keyboard": [
-            [{"text": text, "url": url}]
-        ]
-    }
-
 # ============ COMMAND HANDLERS ============
 
 def handle_start(chat_id, user_id, username, first_name):
@@ -275,6 +253,18 @@ def handle_approved_card(chat_id):
     # Format card details
     card_details = f"{card_data['card_number']}|{card_data['month']}|20{card_data['year']}|{card_data['cvv']}"
     card_masked = f"{card_data['card_number'][:6]}xxxx|{card_data['month']}|20{card_data['year']}|xxx"
+    
+    reply_markup = {
+            "inline_keyboard": [
+                [
+                    {"text": "𝚅𝙸𝙿", "url": "https://t.me/+u9cv-q_x57xkNzA1"},
+                    {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "url": "https://t.me/+rzRUgyJfia84NjBl"},
+                ],
+                [
+                    {"text": "Mᴀɪɴ", "url": "https://t.me/atulfroxt"},
+                ]
+            ]
+        }
     
     # High hit badge
     high_hit_badge = " 🔥 HIGH HIT" if card_data['is_high_hit'] else ""
@@ -588,4 +578,4 @@ if __name__ == '__main__':
     
     # Keep the script running
     while True:
-        time.sleep(60)
+        time.sleep(60)7
