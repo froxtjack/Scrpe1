@@ -191,27 +191,28 @@ def luhn_check(card_number):
 
 # ============ KEYBOARD BUTTONS ============
 
-def get_main_menu_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="𝙼𝙰𝙸𝙽", url="https://t.me/atulfroxt", style="success"),
-            InlineKeyboardButton(text="𝙲𝙰𝚁𝙳𝙸𝙽𝙶", url="https://t.me/+sT1N0pne6sQzNTFl", style="success")
-        ],
-        [
-            InlineKeyboardButton(text="𝙲𝙷𝙰𝚁𝙶𝙴", url="https://t.me/+rzRUgyJfia84NjBl", style="primary"),
-            InlineKeyboardButton(text="𝚅𝙸𝙿", url="https://t.me/+u9cv-q_x57xkNzA1", style="primary")
-        ],
-        [
-            InlineKeyboardButton(text="𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", url="https://t.me/+yn-01TbWsfk2NTU1", style="success"),
-            InlineKeyboardButton(text="𝚆𝙴𝙱", url="https://your-website.com", style="success")
-        ],
-        [
-            InlineKeyboardButton(text="𝙰𝙰𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", url="https://t.me/aaproved_card07", style="success")
-        ],
-        [
-            InlineKeyboardButton(text="𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", callback_data="add_channel", style="danger")
-        ]
+@bot.on(events.CallbackQuery(pattern=b"menu_main"))
+async def menu_main_callback(event):
+    user_id = event.sender_id
+    sender = await event.get_sender()
+    name = sender.first_name if sender.first_name else "User"
+    msg = f"""🐍 <b>FROXT</b>\n"
+<b>SCRAP BOT</b>\n"
+━━━━━━━━━━━━━━━━━━━━━━━━\n"
+👤 <b>User ID:</b> <code>{user_id}</code>\n"
+👤 <b>Name:</b> {username or first_name}\n"
+━━━━━━━━━━━━━━━━━━━━━━━━\n"
+⚠️ <i>No Channel Added</i>\n"
+• Use '🔗 Add Channel' button to add your channel\n"
+• <b>Enjoy!</b>"""
+    buttons = [
+        [Button.url("𝙼𝙰𝙸𝙽", "https://t.me/atulfroxt", style="success"), Button.url("𝙲𝙰𝚁𝙳𝙸𝙽𝙶", "https://t.me/+sT1N0pne6sQzNTFl", style="success")],
+        [Button.url("𝙲𝙷𝙰𝚁𝙶𝙴", "https://t.me/+rzRUgyJfia84NjBl", style="success"), Button.url("𝚅𝙸𝙿", "https://t.me/+u9cv-q_x57xkNzA1", style="success")],
+        [Button.url("𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "https://t.me/+yn-01TbWsfk2NTU1", style="success"), Button.url("𝚆𝙴𝙱", "https://your-website.com", style="success")],
+        [Button.url("𝙰𝙰𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success")]
+        [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"menu_close", style="danger")]
     ]
+    await event.edit(premium_emoji(msg), buttons=buttons, parse_mode='html', link_preview=False)
     
     # Send with image
     return send_telegram_message(
@@ -226,11 +227,11 @@ def get_card_keyboard():
     return {
         "inline_keyboard": [
             [
-                {"text": "𝚅𝙸𝙿", "callback_data": "vip"},
-                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", "callback_data": "charge"},
+                {"text": "𝚅𝙸𝙿", callback_data="vip"},
+                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", callback_data="charge"},
             ],
             [
-                {"text": "Mᴀɪɴ", "callback_data": "main"}
+                {"text": "Mᴀɪɴ", callback_data="main"}
             ]
         ]
     }
