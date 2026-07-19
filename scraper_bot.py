@@ -158,7 +158,17 @@ async def start_command(event):
         [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
     ]
     
-    await send_gif_reply(event, message=premium_emoji(msg), buttons=buttons, parse_mode='html', link_preview=False
+    try:
+        await bot.send_file(
+            event.chat_id,
+            START_IMAGE,
+            caption=msg,
+            buttons=buttons,
+            parse_mode='html'
+        )
+    except Exception as e:
+        logger.error(f"Error sending image: {e}")
+        await event.reply(msg, buttons=buttons, parse_mode='html', link_preview=False)
         
 @bot.on(events.NewMessage(pattern='/scrape'))
 async def scrape_command(event):
@@ -399,4 +409,4 @@ async def main():
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main())async 
