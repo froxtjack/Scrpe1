@@ -227,11 +227,11 @@ def get_card_keyboard():
     return {
         "inline_keyboard": [
             [
-                {"text": "𝚅𝙸𝙿", callback_data="vip"},
-                {"text": "𝙲𝙷𝙰𝚁𝙶𝙴", callback_data="charge"},
+                {text="𝚅𝙸𝙿", callback_data="vip"},
+                {text="𝙲𝙷𝙰𝚁𝙶𝙴", callback_data="charge"},
             ],
             [
-                {"text": "Mᴀɪɴ", callback_data="main"}
+                {text="Mᴀɪɴ", callback_data="main"}
             ]
         ]
     }
