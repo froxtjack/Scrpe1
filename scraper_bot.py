@@ -158,7 +158,7 @@ async def start_command(event):
         [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
     ]
     await send_gif_reply(event, message=premium_emoji(msg), buttons=buttons, parse_mode='html', link_preview=False)
-    except Exception as e:
+    except:
         print(f"Error in /start: {e}")
         await event.reply(f"Error in /start: {e}")
         
