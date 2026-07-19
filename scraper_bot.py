@@ -154,7 +154,7 @@ async def start_command(event):
         [Button.url("𝙼𝙰𝙸𝙽", "https://t.me/atulfroxt", style="success"), Button.url("𝙲𝙰𝚁𝙳𝙸𝙽𝙶", "https://t.me/+sT1N0pne6sQzNTFl", style="success")],
         [Button.url("𝙲𝙷𝙰𝚁𝙶𝙴", "https://t.me/+rzRUgyJfia84NjBl", style="success"), Button.url("𝚅𝙸𝙿", "https://t.me/+u9cv-q_x57xkNzA1", style="success")],
         [Button.url("𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "https://t.me/+yn-01TbWsfk2NTU1", style="success"), Button.url("𝚆𝙴𝙱", "https://your-website.com", style="success")],
-        [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success"),
+        [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success")],
         [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
     ]
         await send_gif_reply(event, message=premium_emoji(msg), buttons=buttons, parse_mode='html', link_preview=False)
@@ -239,7 +239,7 @@ async def callback_handler(event):
             [Button.url("𝙼𝙰𝙸𝙽", "https://t.me/atulfroxt", style="success"), Button.url("𝙲𝙰𝚁𝙳𝙸𝙽𝙶", "https://t.me/+sT1N0pne6sQzNTFl", style="success")],
             [Button.url("𝙲𝙷𝙰𝚁𝙶𝙴", "https://t.me/+rzRUgyJfia84NjBl", style="success"), Button.url("𝚅𝙸𝙿", "https://t.me/+u9cv-q_x57xkNzA1", style="success")],
             [Button.url("𝙿𝙰𝙸𝙳_𝙳𝚄𝙼𝙿𝚂", "https://t.me/+yn-01TbWsfk2NTU1", style="success"), Button.url("𝚆𝙴𝙱", "https://your-website.com", style="success")],
-            [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success"),
+            [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success")],
             [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
         ]
         
@@ -401,4 +401,4 @@ async def main():
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    asyncio.run(main())9
+    asyncio.run(main())
