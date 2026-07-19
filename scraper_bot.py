@@ -278,19 +278,19 @@ async def send_approved_card(chat_id, card_data=None):
     card_icon = "4️⃣" if card_data['card_type'] == 'VISA' else "5️⃣"
     
     message = (
-f"━━━━━━━━━━━━━━━━━━━━━━━━
-f"✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}
-f"━━━━━━━━━━━━━━━━━━━━━━━━
-f"💳 <b>𝗖𝗖</b> <code>{card_details}</code>
-f"🍀 <b>𝗚𝗲𝗻</b> <code>/gen {card_masked}</code>
-f"━━━━━━━━━━━━━━━━━━━━━━━━
-f"⚠️ <b>𝗕𝗜𝗡</b> {card_data['bin']}
-f"🏦 <b>𝗕𝗸</b> {card_data['bank']}
-f"🍒 <b>𝗕𝗱</b> {card_data['card_type']}
-f"📌 <b>𝗧𝗲</b> {card_data['type']
-f"👑 <b>𝗟𝘃</b> {card_data['level']}
-f"🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}
-f"━━━━━━━━━━━━━━━━━━━━━━━━
+        f"━━━━━━━━━━━━━━━━━━━━━━━━
+        f"✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}
+        f"━━━━━━━━━━━━━━━━━━━━━━━━
+        f"💳 <b>𝗖𝗖</b> <code>{card_details}</code>
+        f"🍀 <b>𝗚𝗲𝗻</b> <code>/gen {card_masked}</code>
+        f"━━━━━━━━━━━━━━━━━━━━━━━━
+        f"⚠️ <b>𝗕𝗜𝗡</b> {card_data['bin']}
+        f"🏦 <b>𝗕𝗸</b> {card_data['bank']}
+        f"🍒 <b>𝗕𝗱</b> {card_data['card_type']}
+        f"📌 <b>𝗧𝗲</b> {card_data['type']
+        f"👑 <b>𝗟𝘃</b> {card_data['level']}
+        f"🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}
+        f"━━━━━━━━━━━━━━━━━━━━━━━━
 )
     
     buttons = [
