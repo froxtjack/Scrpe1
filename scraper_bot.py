@@ -191,7 +191,6 @@ def luhn_check(card_number):
 
 # ============ KEYBOARD BUTTONS ============
 
-@bot.on(events.CallbackQuery(pattern=b"menu_main"))
 async def menu_main_callback(event):
     user_id = event.sender_id
     sender = await event.get_sender()
