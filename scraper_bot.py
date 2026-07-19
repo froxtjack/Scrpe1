@@ -527,7 +527,7 @@ def webhook():
                     text=add_channel_text,
                     reply_markup={
                         "inline_keyboard": [
-                            [{"text": "Bᴀᴄᴋ", "callback_data": "main",style="danger"}]
+                            [{"text": "Bᴀᴄᴋ", "callback_data": "main"}]
                         ]
                     }
                 )
@@ -578,4 +578,4 @@ if __name__ == '__main__':
     
     # Keep the script running
     while True:
-        time.sleep(60)7
+        time.sleep(60)
