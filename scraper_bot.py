@@ -276,9 +276,6 @@ async def send_approved_card(chat_id, card_data=None):
     
     # Card type icon
     card_icon = "4️⃣" if card_data['card_type'] == 'VISA' else "5️⃣"
-
-    # FIXED: Removed @ symbol and used proper string concatenation
-    bot_username = "@Scra07bot"
     
     msg = f"""━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}
@@ -293,7 +290,7 @@ async def send_approved_card(chat_id, card_data=None):
 👑 <b>𝗟𝘃</b> {card_data['level']}
 🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}
 ━━━━━━━━━━━━━━━━━━━━━━━━
-{bot_username}"""
+<b>@Scra07bot</b>"""
     
     buttons = [
         [Button.inline("𝚅𝙸𝙿", b"vip", style="success"), Button.inline("𝙲𝙷𝙰𝚁𝙶𝙴", b"charge", style="success"), 
