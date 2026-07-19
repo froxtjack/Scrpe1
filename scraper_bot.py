@@ -289,8 +289,7 @@ async def send_approved_card(chat_id, card_data=None):
 📌 <b>𝗧𝗲</b> {card_data['type']
 👑 <b>𝗟𝘃</b> {card_data['level']}
 🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}
-━━━━━━━━━━━━━━━━━━━━━━━━
-<b>@Scra07bot</b>"""
+━━━━━━━━━━━━━━━━━━━━━━━━"""
     
     buttons = [
         [Button.inline("𝚅𝙸𝙿", b"vip", style="success"), Button.inline("𝙲𝙷𝙰𝚁𝙶𝙴", b"charge", style="success"), 
