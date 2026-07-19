@@ -157,19 +157,11 @@ async def start_command(event):
         [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success"),
         [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
     ]
-    # Send with image
-    try:
-        await bot.send_file(
-            event.chat_id,
-            START_IMAGE,
-            caption=msg,
-            buttons=buttons,
-            parse_mode='html'
-        )
+        await send_gif_reply(event, message=premium_emoji(msg), buttons=buttons, parse_mode='html', link_preview=False)
     except Exception as e:
-        logger.error(f"Error sending image: {e}")
-        await event.reply(msg, buttons=buttons, parse_mode='html', link_preview=False)
-
+        print(f"Error in /start: {e}")
+        await event.reply(f"Error in /start: {e}")
+        
 @bot.on(events.NewMessage(pattern='/scrape'))
 async def scrape_command(event):
     """Handle /scrape command - Start scraping cards in channel"""
@@ -409,4 +401,4 @@ async def main():
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    asyncio.run(main())9
