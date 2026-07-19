@@ -157,7 +157,6 @@ async def start_command(event):
         [Button.url("𝙰𝙿𝙿𝚁𝙾𝚅𝙴𝙳_𝙲𝙰𝚁𝙳", "https://t.me/aaproved_card07", style="success"),
         [Button.inline("𝙰𝙳𝙳 𝙲𝙷𝙰𝙽𝙽𝙴𝙻", b"add_channel", style="danger")]
     ]
-    
     # Send with image
     try:
         await bot.send_file(
