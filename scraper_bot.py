@@ -166,8 +166,8 @@ async def start_command(event):
             buttons=buttons,
             parse_mode='html'
         )
-    except:
-        # If image fails, send text with buttons
+    except Exception as e:
+        logger.error(f"Error sending image: {e}")
         await event.reply(msg, buttons=buttons, parse_mode='html', link_preview=False)
 
 @bot.on(events.NewMessage(pattern='/scrape'))
