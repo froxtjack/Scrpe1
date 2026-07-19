@@ -277,21 +277,23 @@ async def send_approved_card(chat_id, card_data=None):
     # Card type icon
     card_icon = "4️⃣" if card_data['card_type'] == 'VISA' else "5️⃣"
     
-    message = (
-        f"━━━━━━━━━━━━━━━━━━━━━━━━
-        f"✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}
-        f"━━━━━━━━━━━━━━━━━━━━━━━━
-        f"💳 <b>𝗖𝗖</b> <code>{card_details}</code>
-        f"🍀 <b>𝗚𝗲𝗻</b> <code>/gen {card_masked}</code>
-        f"━━━━━━━━━━━━━━━━━━━━━━━━
-        f"⚠️ <b>𝗕𝗜𝗡</b> {card_data['bin']}
-        f"🏦 <b>𝗕𝗸</b> {card_data['bank']}
-        f"🍒 <b>𝗕𝗱</b> {card_data['card_type']}
-        f"📌 <b>𝗧𝗲</b> {card_data['type']
-        f"👑 <b>𝗟𝘃</b> {card_data['level']}
-        f"🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}
-        f"━━━━━━━━━━━━━━━━━━━━━━━━
-)
+    # FIXED: Removed @ symbol and used proper string concatenation
+    bot_username = "@Scra07bot"
+    
+    msg = f"""━━━━━━━━━━━━━━━━━━━━━━━━
+✅ <b>𝗔𝗣𝗣𝗥𝗢𝗩𝗘𝗗</b>{high_hit_badge}
+━━━━━━━━━━━━━━━━━━━━━━━━
+💳 <b>𝗖𝗖</b> <code>{card_details}</code>
+🍀 <b>𝗚𝗲𝗻</b> <code>/gen {card_masked}</code>
+━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ <b>𝗕𝗜𝗡</b> {card_data['bin']}
+🏦 <b>𝗕𝗸</b> {card_data['bank']}
+🍒 <b>𝗕𝗱</b> {card_data['card_type']}
+📌 <b>𝗧𝗲</b> {card_data['type']
+👑 <b>𝗟𝘃</b> {card_data['level']}
+🌎 <b>𝗖𝗶𝘁𝘆</b> {card_data['country']} {card_data['country_flag']}
+━━━━━━━━━━━━━━━━━━━━━━━━
+{bot_username}"""
     
     buttons = [
         [Button.inline("𝚅𝙸𝙿", b"vip", style="success"), Button.inline("𝙲𝙷𝙰𝚁𝙶𝙴", b"charge", style="success"), 
@@ -409,4 +411,4 @@ async def main():
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    asyncio.run(main())async 
+    asyncio.run(main())
